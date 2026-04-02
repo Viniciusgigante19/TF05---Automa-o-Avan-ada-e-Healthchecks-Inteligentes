@@ -1,58 +1,44 @@
-import time, yaml, socket, requests
 from flask import Flask, jsonify
+import yaml, os
+from healthchecks.http_check import check_http
+from healthchecks.db_check import check_database
+from healthchecks.custom_check import check_custom
 
 app = Flask(__name__)
 
 def load_config():
-    try:
-        with open('config/healthchecks.yml', 'r') as f:
-            return yaml.safe_load(f)
-    except Exception as e:
-        print(f"Erro ao ler config: {e}")
-        return {"healthchecks": {}}
+    config_path = os.path.join('/app/config', 'healthchecks.yml')
+    with open(config_path, 'r') as f:
+        return yaml.safe_load(f)
 
-def check_http(conf):
-    try:
-        start = time.time()
-        # Se for a própria API, usa 127.0.0.1 para evitar loop de rede externa
-        url = conf['url']
-        if "api:5000" in url:
-            url = url.replace("api", "127.0.0.1")
-            
-        r = requests.get(url, timeout=conf['timeout'])
-        ms = round((time.time() - start) * 1000, 2)
-        status = "healthy" if r.status_code == conf.get('expected_status', 200) else "unhealthy"
-        return {"status": status, "response_time": ms}
-    except Exception as e:
-        print(f"Erro HTTP em {conf.get('url')}: {e}")
-        return {"status": "unhealthy", "response_time": 0}
+def run_checks():
+    config = load_config()
+    results = []
 
-def check_tcp(conf):
-    try:
-        start = time.time()
-        # Tenta resolver o nome do host antes de conectar
-        host = socket.gethostbyname(conf['host'])
-        with socket.create_connection((host, conf['port']), timeout=conf['timeout']):
-            ms = round((time.time() - start) * 1000, 2)
-            return {"status": "healthy", "response_time": ms}
-    except Exception as e:
-        print(f"Erro TCP em {conf.get('host')}: {e}")
-        return {"status": "unhealthy", "response_time": 0}
+    for name, cfg in config.get('healthchecks', {}).items():
+        check_type = cfg.get('type')
+
+        if check_type == 'http':
+            results.append(check_http(name, cfg))
+        elif check_type == 'database':
+            results.append(check_database(name, cfg))
+        elif check_type == 'custom':
+            results.append(check_custom(name, cfg))
+
+    return results
+
+@app.route('/health')
+def health():
+    return jsonify({"status": "ok"})
 
 @app.route('/health/status')
-def status():
-    config = load_config()
-    results = {}
-    if not config or 'healthchecks' not in config:
-        return jsonify({"error": "Config não carregada"}), 500
-
-    for name, data in config['healthchecks'].items():
-        if data['type'] == 'http':
-            results[name] = check_http(data)
-        elif data['type'] == 'tcp':
-            results[name] = check_tcp(data)
-    
-    return jsonify(results)
+def health_status():
+    results = run_checks()
+    overall = all(r['healthy'] for r in results)
+    return jsonify({
+        "overall": "healthy" if overall else "degraded",
+        "services": results
+    })
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=False)

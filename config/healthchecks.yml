@@ -1,14 +1,14 @@
 healthchecks:
   web-frontend:
     type: http
-    url: http://tf05-dashboard:80
+    url: http://dashboard:80
     interval: 30s
     timeout: 5s
     expected_status: 200
     
   api-backend:
     type: http
-    url: http://api:5000/health/status
+    url: http://api:5000/health
     interval: 15s
     timeout: 5s
     expected_status: 200
@@ -18,3 +18,14 @@ healthchecks:
     host: tf05-redis
     port: 6379
     timeout: 5s
+  database:
+    type: database
+    host: db 
+    port: 3306
+    user: root
+    password: pass 
+    database: app 
+    query: "SELECT 1"
+    interval: 30s
+    timeout: 10s
+    retries: 3

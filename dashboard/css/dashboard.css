@@ -1,0 +1,40 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+.dashboard {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-overview {
+    display: flex;
+    gap: 10px;
+}
+
+.status-card, .service-card {
+    background: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 1px 1px 5px rgba(0,0,0,0.1);
+}
+
+.service-card {
+    display: inline-block;
+    width: 220px;
+    margin: 10px;
+}
+
+.healthy { color: green; font-weight: bold; }
+.unhealthy { color: red; font-weight: bold; }
+.error { color: red; font-weight: bold; }

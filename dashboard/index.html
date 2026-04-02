@@ -1,39 +1,50 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <title>TF05 - Monitoramento</title>
     <meta charset="UTF-8">
-    <style>
-        .card { border: 1px solid #ccc; padding: 10px; margin: 10px; display: inline-block; width: 200px; }
-        .healthy { background-color: #d4edda; }
-        .unhealthy { background-color: #f8d7da; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Monitoramento</title>
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
-    <h1>Status dos Serviços</h1>
-    <div id="status-container">Carregando...</div>
+    <div class="dashboard">
+        <header>
+            <h1>Dashboard de Monitoramento</h1>
+            <div class="status-overview">
+                <div class="status-card" id="overall-status">
+                    <h3>Status Geral</h3>
+                    <span class="status-indicator">●</span>
+                    <span class="status-text">Carregando...</span>
+                </div>
+            </div>
+        </header>
 
-    <script>
-        async function check() {
-            try {
-                const res = await fetch('http://localhost:5000/health/status');
-                const data = await res.json();
-                let html = '';
-                for (let service in data) {
-                    const s = data[service];
-                    html += `<div class="card ${s.status}">
-                        <h3>${service}</h3>
-                        <p>Status: ${s.status}</p>
-                        <p>Tempo: ${s.response_time}ms</p>
-                    </div>`;
-                }
-                document.getElementById('status-container').innerHTML = html;
-            } catch (e) {
-                document.getElementById('status-container').innerHTML = "Erro ao conectar na API";
-            }
-        }
-        setInterval(check, 5000);
-        check();
-    </script>
+        <main>
+            <section class="services-grid" id="services-grid">
+                <!-- Cards de serviços serão inseridos pelo JS -->
+            </section>
+
+            <section class="charts-section">
+                <div class="chart-container">
+                    <h3>Response Time (ms)</h3>
+                    <canvas id="responseTimeChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Uptime (%)</h3>
+                    <canvas id="uptimeChart"></canvas>
+                </div>
+            </section>
+
+            <section class="alerts-section">
+                <h3>Alertas Recentes</h3>
+                <div class="alerts-list" id="alerts-list">
+                    Carregando alertas...
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/dashboard.js"></script>
 </body>
 </html>

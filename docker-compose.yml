@@ -1,10 +1,9 @@
 services:
-  # 1. Dashboard (O seu "Frontend")
   dashboard:
     build:
       context: dashboard
       dockerfile: Dockerfile
-    container_name: tf05-dashboard
+    container_name: dashboard
     ports:
       - "3000:80"
     networks:
@@ -13,12 +12,11 @@ services:
       api:
         condition: service_healthy
 
-  # 2. API de Métricas (O seu "Backend/Orquestrador")
   api:
     build:
       context: api
       dockerfile: Dockerfile
-    container_name: tf05-api
+    container_name: api
     ports:
       - "5000:5000"
     environment:
@@ -30,21 +28,20 @@ services:
     networks:
       - monitor-net
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health/status')"]
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 5s
+      start_period: 20s
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
 
-  # 3. Banco de Dados (Exigido p/ Histórico e DB Check)
   db:
     image: mysql:8.0
-    container_name: tf05-db
+    container_name: db
     environment:
       MYSQL_DATABASE: app
       MYSQL_ROOT_PASSWORD: pass
@@ -58,10 +55,9 @@ services:
     ports:
       - "3307:3306"
 
-  # 4. Redis (Exigido p/ TCP Check)
   redis:
     image: redis:alpine
-    container_name: tf05-redis
+    container_name: redis
     networks:
       - monitor-net
     healthcheck:
