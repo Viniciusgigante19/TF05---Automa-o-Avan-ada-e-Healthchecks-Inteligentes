@@ -1,10 +1,14 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 import yaml, os
 from healthchecks.http_check import check_http
 from healthchecks.db_check import check_database
 from healthchecks.custom_check import check_custom
 
+
 app = Flask(__name__)
+
+CORS(app, origins="http://localhost:3000")
 
 def load_config():
     config_path = os.path.join('/app/config', 'healthchecks.yml')

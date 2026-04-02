@@ -10,7 +10,8 @@ RUN pip install --no-cache-dir \
     flask \
     requests \
     pyyaml \
-    mysql-connector-python
+    mysql-connector-python \
+    flask-cors
 
 # Copia o código da API
 COPY . .

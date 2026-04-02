@@ -1,4 +1,4 @@
-const API_URL = 'http://api:5000/health/status'; 
+const API_URL = 'http://localhost:5000/health/status'; 
 
 async function fetchHealth() {
     try {
@@ -37,24 +37,13 @@ function renderDashboard(data) {
     renderCharts(data.services);
 }
 
+// SUBSTITUI por isso:
 function renderCharts(services) {
     const labels = services.map(s => s.service);
     const responseTimes = services.map(s => s.response_time_ms ?? 0);
     const uptimes = services.map(s => s.healthy ? 100 : 0);
 
-    // Response Time Chart
-    new Chart(document.getElementById('responseTimeChart'), {
-        type: 'bar',
-        data: { labels, datasets: [{ label: 'Response Time (ms)', data: responseTimes, backgroundColor: 'blue' }] },
-        options: { responsive: true }
-    });
-
-    // Uptime Chart
-    new Chart(document.getElementById('uptimeChart'), {
-        type: 'bar',
-        data: { labels, datasets: [{ label: 'Uptime (%)', data: uptimes, backgroundColor: 'green' }] },
-        options: { responsive: true, scales: { y: { max: 100, min: 0 } } }
-    });
+    updateCharts(labels, responseTimes, uptimes);
 }
 
 // Atualiza a cada 5 segundos
