@@ -1,0 +1,77 @@
+services:
+  # 1. Dashboard (O seu "Frontend")
+  dashboard:
+    build:
+      context: dashboard
+      dockerfile: Dockerfile
+    container_name: tf05-dashboard
+    ports:
+      - "3000:80"
+    networks:
+      - monitor-net
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # 2. API de Métricas (O seu "Backend/Orquestrador")
+  api:
+    build:
+      context: api
+      dockerfile: Dockerfile
+    container_name: tf05-api
+    ports:
+      - "5000:5000"
+    environment:
+      - DB_HOST=db
+      - REDIS_HOST=redis
+    volumes:
+      - ./config:/app/config
+      - ./scripts:/app/scripts
+    networks:
+      - monitor-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health/status')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # 3. Banco de Dados (Exigido p/ Histórico e DB Check)
+  db:
+    image: mysql:8.0
+    container_name: tf05-db
+    environment:
+      MYSQL_DATABASE: app
+      MYSQL_ROOT_PASSWORD: pass
+    networks:
+      - monitor-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "3307:3306"
+
+  # 4. Redis (Exigido p/ TCP Check)
+  redis:
+    image: redis:alpine
+    container_name: tf05-redis
+    networks:
+      - monitor-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    ports:
+      - "6379:6379"
+
+networks:
+  monitor-net:
+    driver: bridge

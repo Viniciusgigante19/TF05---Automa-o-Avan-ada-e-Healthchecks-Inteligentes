@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>TF05 - Monitoramento</title>
+    <meta charset="UTF-8">
+    <style>
+        .card { border: 1px solid #ccc; padding: 10px; margin: 10px; display: inline-block; width: 200px; }
+        .healthy { background-color: #d4edda; }
+        .unhealthy { background-color: #f8d7da; }
+    </style>
+</head>
+<body>
+    <h1>Status dos Serviços</h1>
+    <div id="status-container">Carregando...</div>
+
+    <script>
+        async function check() {
+            try {
+                const res = await fetch('http://localhost:5000/health/status');
+                const data = await res.json();
+                let html = '';
+                for (let service in data) {
+                    const s = data[service];
+                    html += `<div class="card ${s.status}">
+                        <h3>${service}</h3>
+                        <p>Status: ${s.status}</p>
+                        <p>Tempo: ${s.response_time}ms</p>
+                    </div>`;
+                }
+                document.getElementById('status-container').innerHTML = html;
+            } catch (e) {
+                document.getElementById('status-container').innerHTML = "Erro ao conectar na API";
+            }
+        }
+        setInterval(check, 5000);
+        check();
+    </script>
+</body>
+</html>

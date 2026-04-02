@@ -1,0 +1,20 @@
+healthchecks:
+  web-frontend:
+    type: http
+    url: http://tf05-dashboard:80
+    interval: 30s
+    timeout: 5s
+    expected_status: 200
+    
+  api-backend:
+    type: http
+    url: http://api:5000/health/status
+    interval: 15s
+    timeout: 5s
+    expected_status: 200
+    
+  redis-cache:
+    type: tcp
+    host: tf05-redis
+    port: 6379
+    timeout: 5s
