@@ -38,6 +38,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    
 
   db:
     image: mysql:8.0
@@ -48,12 +49,14 @@ services:
     networks:
       - monitor-net
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppass"]
+      test: ["CMD-SHELL", "mysqladmin ping -h db -u root -ppass || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
     ports:
       - "3307:3306"
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
   redis:
     image: redis:alpine

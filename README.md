@@ -27,8 +27,3 @@ Persistência de Telemetria (MySQL): Armazena o histórico de todas as verifica�
 
 Redis Cache
 Alvo de Conectividade (TCP): Atua como o serviço de infraestrutura para validar o sistema de alertas e o critério de verificação via protocolo TCP. No ecossistema, simula a camada de cache que deve estar sempre disponível.
-
-docker stop $(docker ps -aq) && \
-docker rm $(docker ps -aq) && \
-docker rmi $(docker images -q) && \
-docker volume rm $(docker volume ls -q)

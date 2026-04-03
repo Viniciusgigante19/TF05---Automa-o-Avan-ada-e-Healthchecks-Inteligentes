@@ -4,9 +4,19 @@ import yaml, os
 from healthchecks.http_check import check_http
 from healthchecks.db_check import check_database
 from healthchecks.custom_check import check_custom
-
+import mysql.connector
+import os
 
 app = Flask(__name__)
+
+conn = mysql.connector.connect(
+    host=os.getenv("DB_HOST", "db"),
+    port=int(os.getenv("DB_PORT", 3306)),
+    user=os.getenv("DB_USER", "root"),
+    password=os.getenv("DB_PASSWORD", "pass"),
+    database=os.getenv("DB_NAME", "app")
+)
+cursor = conn.cursor()
 
 CORS(app, origins="http://localhost:3000")
 
@@ -39,10 +49,29 @@ def health():
 def health_status():
     results = run_checks()
     overall = all(r['healthy'] for r in results)
+
+    for r in results:
+        sql = """
+        INSERT INTO metrics (service, healthy, response_time_ms, check_type, error)
+        VALUES (%s, %s, %s, %s, %s)
+        """
+
+        values = (
+            r.get('service'),
+            r.get('healthy'),
+            r.get('response_time_ms'),
+            r.get('type'),
+            r.get('error')
+        )
+
+        cursor.execute(sql, values)
+    conn.commit()
+
     return jsonify({
         "overall": "healthy" if overall else "degraded",
         "services": results
     })
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
