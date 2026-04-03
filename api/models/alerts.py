@@ -1,54 +1,31 @@
+import os
+import json
 from datetime import datetime
 
-class Alert:
+ALERTS_FILE = os.getenv("ALERTS_FILE", "/app/logs/alerts.json")
+
+def create_alert(service, alert_type, message):
     """
-    Representa um alerta gerado quando um serviço falha
-    ou ultrapassa um threshold.
+    Grava alerta em arquivo JSON independente do banco.
     """
-    def __init__(self, service, level, message):
-        self.service = service
-        self.level = level 
-        self.message = message
-        self.timestamp = datetime.utcnow().isoformat()
+    # Garante que a pasta existe
+    os.makedirs(os.path.dirname(ALERTS_FILE), exist_ok=True)
 
-    def to_dict(self):
-        return {
-            "service": self.service,
-            "level": self.level,
-            "message": self.message,
-            "timestamp": self.timestamp
-        }
+    # Lê alertas existentes
+    if os.path.exists(ALERTS_FILE):
+        with open(ALERTS_FILE, 'r') as f:
+            alerts = json.load(f)
+    else:
+        alerts = []
 
+    # Adiciona novo alerta
+    alerts.append({
+        "service": service,
+        "type": alert_type,
+        "message": message,
+        "timestamp": datetime.now().isoformat()
+    })
 
-def evaluate_alerts(results, thresholds):
-    """
-    Recebe os resultados dos healthchecks e os thresholds,
-    retorna lista de alertas gerados.
-    """
-    alerts = []
-    rt_warning = thresholds.get('response_time', {}).get('warning', 1000)
-    rt_critical = thresholds.get('response_time', {}).get('critical', 5000)
-
-    for r in results:
-        if not r.get('healthy'):
-            alerts.append(Alert(
-                service=r['service'],
-                level='critical',
-                message=f"Serviço {r['service']} está DOWN. Erro: {r.get('error', 'desconhecido')}"
-            ).to_dict())
-
-        elif r.get('response_time_ms', 0) >= rt_critical:
-            alerts.append(Alert(
-                service=r['service'],
-                level='critical',
-                message=f"Tempo de resposta crítico: {r['response_time_ms']}ms"
-            ).to_dict())
-
-        elif r.get('response_time_ms', 0) >= rt_warning:
-            alerts.append(Alert(
-                service=r['service'],
-                level='warning',
-                message=f"Tempo de resposta alto: {r['response_time_ms']}ms"
-            ).to_dict())
-
-    return alerts
+    # Salva de volta
+    with open(ALERTS_FILE, 'w') as f:
+        json.dump(alerts, f, indent=2)

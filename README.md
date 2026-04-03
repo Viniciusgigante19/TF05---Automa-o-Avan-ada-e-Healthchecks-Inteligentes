@@ -27,3 +27,10 @@ Persistência de Telemetria (MySQL): Armazena o histórico de todas as verifica�
 
 Redis Cache
 Alvo de Conectividade (TCP): Atua como o serviço de infraestrutura para validar o sistema de alertas e o critério de verificação via protocolo TCP. No ecossistema, simula a camada de cache que deve estar sempre disponível.
+[
+  {
+    "service": "web-frontend",
+    "type": "critical",
+    "message": "Erro ao salvar m\u00e9trica: 2013 (HY000): Lost connection to MySQL server during query",
+    "timestamp": "2026-04-03T16:42:04.179372"
+  },

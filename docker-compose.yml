@@ -25,6 +25,7 @@ services:
     volumes:
       - ./config:/app/config
       - ./scripts:/app/scripts
+      - ./logs:/app/logs
     networks:
       - monitor-net
     healthcheck:

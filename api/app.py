@@ -4,6 +4,8 @@ import yaml, os
 from healthchecks.http_check import check_http
 from healthchecks.db_check import check_database
 from healthchecks.custom_check import check_custom
+from datetime import datetime
+from models.alerts import create_alert
 import mysql.connector
 import os
 
@@ -51,27 +53,39 @@ def health_status():
     overall = all(r['healthy'] for r in results)
 
     for r in results:
-        sql = """
-        INSERT INTO metrics (service, healthy, response_time_ms, check_type, error)
-        VALUES (%s, %s, %s, %s, %s)
-        """
+        try:
+            sql = """
+            INSERT INTO metrics (service, healthy, response_time_ms, check_type, error)
+            VALUES (%s, %s, %s, %s, %s)
+            """
+            values = (
+                r.get('service'),
+                r.get('healthy'),
+                r.get('response_time_ms'),
+                r.get('type'),
+                r.get('error')
+            )
+            cursor.execute(sql, values)
+            conn.commit()
+        except mysql.connector.Error as e:
+            create_alert(
+                service=r.get('service', 'unknown'),
+                alert_type='critical',
+                message=f"Erro ao salvar métrica: {e}"
+            )
+            print(f"[DB ERROR] {e}")
 
-        values = (
-            r.get('service'),
-            r.get('healthy'),
-            r.get('response_time_ms'),
-            r.get('type'),
-            r.get('error')
-        )
-
-        cursor.execute(sql, values)
-    conn.commit()
+        if not r.get('healthy', True):
+            create_alert(
+                service=r.get('service', 'unknown'),
+                alert_type='critical',
+                message=r.get('error', 'Falha detectada')
+            )
 
     return jsonify({
         "overall": "healthy" if overall else "degraded",
         "services": results
     })
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
